@@ -1,7 +1,33 @@
-import { Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd";
+import {
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Form,
+  Input,
+  Layout,
+  Space,
+} from "antd";
 import { LockFilled, UserOutlined, LockOutlined } from "@ant-design/icons";
 import Logo from "../../components/icons/Logo";
+import { useMutation } from "@tanstack/react-query";
+import { Credentials } from "../../types";
+import { login } from "../../http/api";
+
+const loginUser = async (credentials: Credentials) => {
+  const data = await login(credentials);
+  return data;
+};
+
 const LoginPage = () => {
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: loginUser,
+    onSuccess: async () => {
+      console.log("login success");
+    },
+  });
+
   return (
     <>
       <Layout
@@ -29,7 +55,7 @@ const LoginPage = () => {
                 }}
               >
                 <LockFilled />
-                Sing in
+                Sign in
               </Space>
             }
           >
@@ -37,7 +63,17 @@ const LoginPage = () => {
               initialValues={{
                 remember: true,
               }}
+              onFinish={(values) => {
+                mutate({ email: values.username, password: values.password });
+              }}
             >
+              {isError && error?.message && (
+                <Alert
+                  style={{ marginBottom: 24 }}
+                  type="error"
+                  message={error.message}
+                />
+              )}
               <Form.Item
                 name="username"
                 rules={[
@@ -61,19 +97,22 @@ const LoginPage = () => {
                   placeholder="Password"
                 />
               </Form.Item>
-              <Flex justify="space-between">
-                <Form.Item name="remember" valuePropName="checked">
-                  <Checkbox>Remember me</Checkbox>
-                </Form.Item>
+              <Form.Item
+                name="remember"
+                valuePropName="checked"
+                style={{ display: "flex", justifyContent: "space-between" }}
+              >
+                <Checkbox>Remember me</Checkbox>
                 <a href="#" id="login-form-forget">
                   Forget Password
                 </a>
-              </Flex>
+              </Form.Item>
               <Form.Item>
                 <Button
                   type="primary"
                   htmlType="submit"
                   style={{ width: "100%" }}
+                  loading={isPending}
                 >
                   Login
                 </Button>
