@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Flex,
   Form,
   Input,
   Layout,
@@ -128,16 +129,14 @@ const LoginPage = () => {
                   placeholder="Password"
                 />
               </Form.Item>
-              <Form.Item
-                name="remember"
-                valuePropName="checked"
-                style={{ display: "flex", justifyContent: "space-between" }}
-              >
-                <Checkbox>Remember me</Checkbox>
+              <Flex justify="space-between">
+                <Form.Item name="remember" valuePropName="checked">
+                  <Checkbox>Remember me</Checkbox>
+                </Form.Item>
                 <a href="#" id="login-form-forget">
                   Forget Password
                 </a>
-              </Form.Item>
+              </Flex>
               <Form.Item>
                 <Button
                   type="primary"
