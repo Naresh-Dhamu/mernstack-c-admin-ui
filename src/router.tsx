@@ -3,7 +3,7 @@ import LoginPage from "./pages/Login/login";
 import Dashborad from "./layouts/Dashborad";
 import NonAuth from "./layouts/NonAuth";
 import Root from "./layouts/Root";
-import Users from "./pages/users/users";
+import Users from "./pages/users/Users";
 import HomePage from "./pages/Home/HomePage";
 
 export const router = createBrowserRouter([
