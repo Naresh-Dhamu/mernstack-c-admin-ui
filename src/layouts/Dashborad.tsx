@@ -51,7 +51,7 @@ const items = [
 ];
 
 const Dashborad = () => {
-  const { logout: logoutFormStore } = useAuthState();
+  const { user, logout: logoutFormStore } = useAuthState();
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
@@ -65,7 +65,6 @@ const Dashborad = () => {
     token: { colorBgContainer },
   } = theme.useToken();
 
-  const { user } = useAuthState();
   if (user === null) {
     return <Navigate to="/auth/login" replace={true} />;
   }
@@ -98,7 +97,14 @@ const Dashborad = () => {
             }}
           >
             <Flex gap="middle" align="start" justify="space-between">
-              <Badge text="Global" status="success" />
+              <div>
+                <Badge
+                  style={{ color: "#F65F42" }}
+                  color="#F65F42"
+                  text={user.role === "admin" ? "admin" : user.tenant?.name}
+                  status="success"
+                />
+              </div>
               <Space size={16}>
                 <Badge dot={true}>
                   <BellFilled />
@@ -118,13 +124,13 @@ const Dashborad = () => {
                   <Avatar
                     style={{ backgroundColor: "#fde3cf", color: "#f56a00" }}
                   >
-                    U
+                    {user.firstName.slice(0, 1).toUpperCase()}
                   </Avatar>
                 </Dropdown>
               </Space>
             </Flex>
           </Header>
-          <Content style={{ margin: "0 16px" }}>
+          <Content style={{ margin: "24px" }}>
             {/* <Breadcrumb style={{ margin: "16px 0" }}>
               <Breadcrumb.Item>User</Breadcrumb.Item>
               <Breadcrumb.Item>Bill</Breadcrumb.Item>
