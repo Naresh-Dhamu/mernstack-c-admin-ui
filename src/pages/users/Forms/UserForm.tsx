@@ -27,7 +27,7 @@ const UserForm = () => {
                     },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input size="large" type="text" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -38,7 +38,7 @@ const UserForm = () => {
                     { required: true, message: "Please input your last name!" },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input size="large" type="text" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -50,7 +50,7 @@ const UserForm = () => {
                     { type: "email", message: "Please input a valid email!" },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input size="large" type="email" />
                 </Form.Item>
               </Col>
             </Row>
@@ -65,7 +65,7 @@ const UserForm = () => {
                     { required: true, message: "Please input your password!" },
                   ]}
                 >
-                  <Input size="large" />
+                  <Input size="large" type="password" />
                 </Form.Item>
               </Col>
             </Row>
