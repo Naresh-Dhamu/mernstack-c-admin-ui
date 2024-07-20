@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Drawer, Space, Table } from "antd";
+import { Breadcrumb, Button, Drawer, Form, Space, Table, theme } from "antd";
 import { RightOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,12 +8,8 @@ import { useAuthState } from "../../store";
 import { PlusOutlined } from "@ant-design/icons";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
+import UserForm from "./Forms/UserForm";
 const columns = [
-  {
-    title: "ID",
-    dataIndex: "id",
-    key: "id",
-  },
   {
     title: "Name",
     dataIndex: "firstName",
@@ -44,8 +40,16 @@ const columns = [
       );
     },
   },
+  {
+    title: "ID",
+    dataIndex: "_id",
+    key: "_id",
+  },
 ];
 const Users = () => {
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const {
     data: users,
@@ -87,9 +91,10 @@ const Users = () => {
         <Table columns={columns} dataSource={users} rowKey={(row) => row.id} />
 
         <Drawer
-          title="Create a new User"
+          title="Create User"
           width={720}
           destroyOnClose={true}
+          style={{ backgroundColor: colorBgLayout }}
           open={drawerOpen}
           onClose={() => {
             setDrawerOpen(false);
@@ -101,7 +106,9 @@ const Users = () => {
             </Space>
           }
         >
-          sfgdgfdgfdgfdgfdgfdg
+          <Form layout="vertical">
+            <UserForm />
+          </Form>
         </Drawer>
       </Space>
     </>
