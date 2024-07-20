@@ -105,7 +105,7 @@ const UserForm = () => {
                     allowClear={true}
                   >
                     {tenants?.map((tenant: TenantTypes) => (
-                      <Select.Option value={tenant._id}>
+                      <Select.Option value={tenant._id} key={tenant._id}>
                         {tenant.name}
                       </Select.Option>
                     ))}

@@ -21,12 +21,14 @@ export interface IError {
 }
 
 export type User = {
+  [x: string]: string;
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: string;
-  creactedAt: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreacteUserData = {
@@ -36,7 +38,7 @@ export type CreacteUserData = {
   password: string;
   role: string;
   tenantId: string;
-  creactedAt: string;
+  createdAt: string;
   updatedAt: string;
 };
 export type TenantTypes = {
@@ -44,5 +46,6 @@ export type TenantTypes = {
   name: string;
   address: string;
   userId: string;
-  creactedAt: string;
+  createdAt: string;
+  updatedAt: string;
 };

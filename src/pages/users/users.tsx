@@ -9,6 +9,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import UsersFilter from "./UsersFilter";
 import { useState } from "react";
 import UserForm from "./Forms/UserForm";
+import { LIMIT } from "../../constants";
 const columns = [
   {
     title: "Name",
@@ -45,6 +46,66 @@ const columns = [
     dataIndex: "_id",
     key: "_id",
   },
+  {
+    title: "Created At",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (_text: string, record: User) => {
+      const convertToReadableDate = (utcDate: string) => {
+        const date = new Date(utcDate);
+
+        const options: Intl.DateTimeFormatOptions = {
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour12: true,
+        };
+
+        let formattedDate = date.toLocaleString("en-GB", options);
+
+        formattedDate = formattedDate.replace(/(am|pm)/gi, (match) =>
+          match.toUpperCase()
+        );
+
+        return formattedDate;
+      };
+
+      return <div>{convertToReadableDate(record.createdAt)}</div>;
+    },
+  },
+  {
+    title: "Updated At",
+    dataIndex: "updatedAt",
+    key: "updatedAt",
+    render: (_text: string, record: User) => {
+      const convertToReadableDate = (utcDate: string) => {
+        const date = new Date(utcDate);
+
+        const options: Intl.DateTimeFormatOptions = {
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour12: true,
+        };
+
+        let formattedDate = date.toLocaleString("en-GB", options);
+
+        formattedDate = formattedDate.replace(/(am|pm)/gi, (match) =>
+          match.toUpperCase()
+        );
+
+        return formattedDate;
+      };
+
+      return <div>{convertToReadableDate(record.updatedAt)}</div>;
+    },
+  },
 ];
 const Users = () => {
   const [form] = Form.useForm();
@@ -76,6 +137,12 @@ const Users = () => {
   const {
     token: { colorBgLayout },
   } = theme.useToken();
+
+  const [queryParams, setQueryParams] = useState({
+    page: 1,
+    limit: LIMIT,
+  });
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const {
     data: users,
@@ -83,9 +150,12 @@ const Users = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", queryParams],
     queryFn: () => {
-      return getUsers().then((res) => res.data);
+      const queryString = new URLSearchParams(
+        queryParams as unknown as Record<string, string>
+      ).toString();
+      return getUsers(queryString).then((res) => res.data);
     },
   });
   const { user } = useAuthState();
@@ -114,7 +184,19 @@ const Users = () => {
             Add User
           </Button>
         </UsersFilter>
-        <Table columns={columns} dataSource={users} rowKey={(row) => row.id} />
+        <Table
+          columns={columns}
+          dataSource={users?.data}
+          rowKey={(row) => row.id || row._id}
+          pagination={{
+            current: queryParams.page,
+            pageSize: queryParams.limit,
+            total: users?.total,
+            onChange: (page, pageSize) => {
+              setQueryParams({ page, limit: pageSize });
+            },
+          }}
+        />
 
         <Drawer
           title="Create User"
