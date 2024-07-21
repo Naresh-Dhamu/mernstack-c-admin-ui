@@ -23,9 +23,10 @@ import { CreacteUserData, FieldData, User } from "../../types";
 import { useAuthState } from "../../store";
 import { PlusOutlined } from "@ant-design/icons";
 import UsersFilter from "./UsersFilter";
-import { useState } from "react";
+import React, { useState } from "react";
 import UserForm from "./Forms/UserForm";
 import { LIMIT } from "../../constants";
+import { debounce } from "lodash";
 const columns = [
   {
     title: "Name",
@@ -180,13 +181,22 @@ const Users = () => {
     placeholderData: keepPreviousData,
   });
 
+  const debouncedQUpadate = React.useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({ ...prev, q: value }));
+    }, 700);
+  }, []);
   const onFilterChange = (changeFields: FieldData[]) => {
     const changeFillterFields = changeFields
       .map((item) => ({
         [item.name[0]]: item.value,
       }))
       .reduce((prev, curr) => ({ ...prev, ...curr }), {});
-    setQueryParams((prev) => ({ ...prev, ...changeFillterFields }));
+    if ("q" in changeFillterFields) {
+      debouncedQUpadate(changeFillterFields.q);
+    } else {
+      setQueryParams((prev) => ({ ...prev, ...changeFillterFields }));
+    }
   };
   const { user } = useAuthState();
   if (user?.role !== "admin") {
