@@ -1,9 +1,25 @@
-import { Breadcrumb, Button, Drawer, Form, Space, Table, theme } from "antd";
-import { RightOutlined } from "@ant-design/icons";
+import {
+  Breadcrumb,
+  Button,
+  Drawer,
+  Flex,
+  Form,
+  Space,
+  Spin,
+  Table,
+  theme,
+  Typography,
+} from "antd";
+import { RightOutlined, LoadingOutlined } from "@ant-design/icons";
 import { Link, Navigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { creacteUser, getUsers } from "../../http/api";
-import { CreacteUserData, User } from "../../types";
+import { CreacteUserData, FieldData, User } from "../../types";
 import { useAuthState } from "../../store";
 import { PlusOutlined } from "@ant-design/icons";
 import UsersFilter from "./UsersFilter";
@@ -109,6 +125,7 @@ const columns = [
 ];
 const Users = () => {
   const [form] = Form.useForm();
+  const [fillterForm] = Form.useForm();
   const queryClient = useQueryClient();
 
   const { mutate: userMutate } = useMutation({
@@ -146,18 +163,31 @@ const Users = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const {
     data: users,
-    isLoading,
+    isFetching,
     isError,
     error,
   } = useQuery({
     queryKey: ["users", queryParams],
     queryFn: () => {
+      const filteredParams = Object.fromEntries(
+        Object.entries(queryParams).filter((item) => !!item[1])
+      );
       const queryString = new URLSearchParams(
-        queryParams as unknown as Record<string, string>
+        filteredParams as unknown as Record<string, string>
       ).toString();
       return getUsers(queryString).then((res) => res.data);
     },
+    placeholderData: keepPreviousData,
   });
+
+  const onFilterChange = (changeFields: FieldData[]) => {
+    const changeFillterFields = changeFields
+      .map((item) => ({
+        [item.name[0]]: item.value,
+      }))
+      .reduce((prev, curr) => ({ ...prev, ...curr }), {});
+    setQueryParams((prev) => ({ ...prev, ...changeFillterFields }));
+  };
   const { user } = useAuthState();
   if (user?.role !== "admin") {
     return <Navigate to="/" replace={true} />;
@@ -165,25 +195,34 @@ const Users = () => {
   return (
     <>
       <Space size="large" style={{ width: "100%" }} direction="vertical">
-        <Breadcrumb
-          separator={<RightOutlined />}
-          items={[{ title: <Link to="/">Dashboard</Link> }, { title: "Users" }]}
-        />
-        {isLoading && <div>Loading...</div>}
-        {isError && <div>{error.message}</div>}
-        <UsersFilter
-          onFilterChange={(filterName: string, filterValue: string) => {
-            console.log(filterName, filterValue);
-          }}
-        >
-          <Button
-            onClick={() => setDrawerOpen(true)}
-            type="primary"
-            icon={<PlusOutlined />}
-          >
-            Add User
-          </Button>
-        </UsersFilter>
+        <Flex justify="space-between" align="center">
+          <Breadcrumb
+            separator={<RightOutlined />}
+            items={[
+              { title: <Link to="/">Dashboard</Link> },
+              { title: "Users" },
+            ]}
+          />
+          {isFetching && (
+            <Spin
+              indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+            />
+          )}
+          {isError && (
+            <Typography.Text type="danger">{error.message}</Typography.Text>
+          )}
+        </Flex>
+        <Form form={fillterForm} onFieldsChange={onFilterChange}>
+          <UsersFilter>
+            <Button
+              onClick={() => setDrawerOpen(true)}
+              type="primary"
+              icon={<PlusOutlined />}
+            >
+              Add User
+            </Button>
+          </UsersFilter>
+        </Form>
         <Table
           columns={columns}
           dataSource={users?.data}
