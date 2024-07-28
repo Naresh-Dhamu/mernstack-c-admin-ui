@@ -58,4 +58,14 @@ export type FieldData = {
 export type Categories = {
   _id: string;
   name: string;
-}
+};
+
+export type Product = {
+  _id: string;
+  name: string;
+  description: string;
+  category: Categories;
+  image: string;
+  isPublish: boolean;
+  createdAt: string;
+};
