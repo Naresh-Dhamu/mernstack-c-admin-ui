@@ -171,7 +171,6 @@ const Tenant = () => {
     }, 500);
   }, []);
   const onFilterChange = (changeFields: FieldData[]) => {
-    console.log("sdff", changeFields);
     const changeFillterFields = changeFields
       .map((item) => ({
         [item.name[0]]: item.value,

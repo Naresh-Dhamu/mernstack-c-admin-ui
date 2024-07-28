@@ -12,11 +12,13 @@ import {
 } from "antd";
 import { getCategories, getTenants } from "../../http/api";
 import { Categories, TenantTypes } from "../../types";
+import { useAuthState } from "../../store";
 
 type ProductsFilterProps = {
   children?: React.ReactNode;
 };
 const ProductsFilter = ({ children }: ProductsFilterProps) => {
+  const { user } = useAuthState();
   const { data: restaurant } = useQuery({
     queryKey: ["restaurants"],
     queryFn: () => {
@@ -54,21 +56,24 @@ const ProductsFilter = ({ children }: ProductsFilterProps) => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={6}>
-              <Form.Item name="tenantId">
-                <Select
-                  style={{ width: "100%" }}
-                  placeholder="Select restaurant"
-                  allowClear={true}
-                >
-                  {restaurant?.map((item: TenantTypes) => (
-                    <Select.Option key={item._id} value={item._id}>
-                      {item.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
+            {user!.role === "admin" && (
+              <Col span={6}>
+                <Form.Item name="tenantId">
+                  <Select
+                    style={{ width: "100%" }}
+                    placeholder="Select restaurant"
+                    allowClear={true}
+                  >
+                    {restaurant?.map((item: TenantTypes) => (
+                      <Select.Option key={item._id} value={item._id}>
+                        {item.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            )}
+
             <Col span={6}>
               <Space align="center">
                 <Form.Item name="isPublish">

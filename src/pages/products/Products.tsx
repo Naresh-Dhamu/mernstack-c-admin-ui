@@ -24,6 +24,7 @@ import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
 import { LIMIT } from "../../constants";
+import { useAuthState } from "../../store";
 
 const columns = [
   {
@@ -70,10 +71,12 @@ const columns = [
   },
 ];
 const Products = () => {
+  const { user } = useAuthState();
   const [filterForm] = Form.useForm();
   const [queryParams, setQueryParams] = useState({
     page: 1,
     limit: LIMIT,
+    tenantId: user!.role === "manager" ? user?.tenant?._id : undefined,
   });
   const {
     data: product,
