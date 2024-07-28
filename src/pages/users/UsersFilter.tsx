@@ -6,7 +6,7 @@ type UsersFilterProps = {
 const UsersFilter = ({ children }: UsersFilterProps) => {
   return (
     <Card>
-      <Row justify="space-between">
+      <Row justify="space-between" align="middle">
         <Col span={16}>
           <Row gutter={20}>
             <Col span={8}>
@@ -28,13 +28,7 @@ const UsersFilter = ({ children }: UsersFilterProps) => {
               </Form.Item>
             </Col>
             {/* <Col span={8}>
-              <Select
-                style={{ width: "100%" }}
-                placeholder="Status"
-                onChange={(selectItem) =>
-                  onFilterChange("statusFilter", selectItem)
-                }
-              >
+              <Select style={{ width: "100%" }} placeholder="Status">
                 <Select.Option value="ban">Ban</Select.Option>
                 <Select.Option value="active">Active</Select.Option>
               </Select>

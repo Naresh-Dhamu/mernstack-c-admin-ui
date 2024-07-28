@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Outlet } from "react-router-dom";
 import { self } from "../http/api";
 import { useAuthState } from "../store";
+import { LoadingOutlined } from "@ant-design/icons";
+
 import { AxiosError } from "axios";
 const getself = async () => {
   const { data } = await self();
@@ -27,8 +29,22 @@ const Root = () => {
     }
   }, [data, setUser]);
   if (isLoading) {
-    return <div>Loading...</div>;
+    document.title = "Loading...";
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <LoadingOutlined style={{ fontSize: 60, color: "#1890ff" }} spin />
+      </div>
+    );
   }
+  document.title = "PIZZ";
+
   return <Outlet />;
 };
 

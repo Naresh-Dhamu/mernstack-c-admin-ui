@@ -18,12 +18,12 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { creacteUser, getUsers } from "../../http/api";
+import { creacteUser, getUsers, updateUser } from "../../http/api";
 import { CreacteUserData, FieldData, User } from "../../types";
 import { useAuthState } from "../../store";
 import { PlusOutlined } from "@ant-design/icons";
 import UsersFilter from "./UsersFilter";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import UserForm from "./Forms/UserForm";
 import { LIMIT } from "../../constants";
 import { debounce } from "lodash";
@@ -59,68 +59,11 @@ const columns = [
     },
   },
   {
-    title: "ID",
-    dataIndex: "_id",
-    key: "_id",
-  },
-  {
-    title: "Created At",
-    dataIndex: "createdAt",
-    key: "createdAt",
+    title: "Restaurant",
+    dataIndex: "tenant",
+    key: "tenant",
     render: (_text: string, record: User) => {
-      const convertToReadableDate = (utcDate: string) => {
-        const date = new Date(utcDate);
-
-        const options: Intl.DateTimeFormatOptions = {
-          hour: "numeric",
-          minute: "numeric",
-          second: "numeric",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour12: true,
-        };
-
-        let formattedDate = date.toLocaleString("en-GB", options);
-
-        formattedDate = formattedDate.replace(/(am|pm)/gi, (match) =>
-          match.toUpperCase()
-        );
-
-        return formattedDate;
-      };
-
-      return <div>{convertToReadableDate(record.createdAt)}</div>;
-    },
-  },
-  {
-    title: "Updated At",
-    dataIndex: "updatedAt",
-    key: "updatedAt",
-    render: (_text: string, record: User) => {
-      const convertToReadableDate = (utcDate: string) => {
-        const date = new Date(utcDate);
-
-        const options: Intl.DateTimeFormatOptions = {
-          hour: "numeric",
-          minute: "numeric",
-          second: "numeric",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          hour12: true,
-        };
-
-        let formattedDate = date.toLocaleString("en-GB", options);
-
-        formattedDate = formattedDate.replace(/(am|pm)/gi, (match) =>
-          match.toUpperCase()
-        );
-
-        return formattedDate;
-      };
-
-      return <div>{convertToReadableDate(record.updatedAt)}</div>;
+      return <div>{record.tenant?.name}</div>;
     },
   },
 ];
@@ -128,6 +71,8 @@ const Users = () => {
   const [form] = Form.useForm();
   const [fillterForm] = Form.useForm();
   const queryClient = useQueryClient();
+
+  const [currentEditUser, setCurrentEditUser] = useState<User | null>();
 
   const { mutate: userMutate } = useMutation({
     mutationKey: ["user"],
@@ -138,19 +83,28 @@ const Users = () => {
       return;
     },
   });
+
+  const { mutate: updateUserMutate } = useMutation({
+    mutationKey: ["update-user"],
+    mutationFn: async (data: CreacteUserData) =>
+      updateUser(data, currentEditUser!._id).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      return;
+    },
+  });
   const onHandleSubmit = async () => {
-    try {
-      await form.validateFields();
-      const formData = form.getFieldsValue();
-      const currentTime = new Date().toISOString();
-      formData.createdAt = formData.createdAt || currentTime;
-      formData.updatedAt = currentTime;
-      await userMutate(formData);
-      form.resetFields();
-      setDrawerOpen(false);
-    } catch (error) {
-      console.error("Failed to submit form", error);
+    await form.validateFields();
+    const isEditMode = !!currentEditUser;
+
+    if (isEditMode) {
+      await updateUserMutate(form.getFieldsValue());
+    } else {
+      await userMutate(form.getFieldsValue());
     }
+    form.resetFields();
+    setCurrentEditUser(null);
+    setDrawerOpen(false);
   };
   const {
     token: { colorBgLayout },
@@ -162,6 +116,16 @@ const Users = () => {
   });
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (currentEditUser) {
+      setDrawerOpen(true);
+      form.setFieldsValue({
+        ...currentEditUser,
+        tenantId: currentEditUser.tenant?._id,
+      });
+    }
+  }, [currentEditUser, form]);
+
   const {
     data: users,
     isFetching,
@@ -183,8 +147,8 @@ const Users = () => {
 
   const debouncedQUpadate = React.useMemo(() => {
     return debounce((value: string | undefined) => {
-      setQueryParams((prev) => ({ ...prev, q: value }));
-    }, 700);
+      setQueryParams((prev) => ({ ...prev, q: value, page: 1 }));
+    }, 500);
   }, []);
   const onFilterChange = (changeFields: FieldData[]) => {
     const changeFillterFields = changeFields
@@ -195,7 +159,7 @@ const Users = () => {
     if ("q" in changeFillterFields) {
       debouncedQUpadate(changeFillterFields.q);
     } else {
-      setQueryParams((prev) => ({ ...prev, ...changeFillterFields }));
+      setQueryParams((prev) => ({ ...prev, ...changeFillterFields, page: 1 }));
     }
   };
   const { user } = useAuthState();
@@ -234,34 +198,63 @@ const Users = () => {
           </UsersFilter>
         </Form>
         <Table
-          columns={columns}
+          columns={[
+            ...columns,
+            {
+              title: "Action",
+              render: (_: string, record: User) => {
+                return (
+                  <div>
+                    <Space>
+                      <Button
+                        type="link"
+                        onClick={() => setCurrentEditUser(record)}
+                      >
+                        Edit
+                      </Button>
+                    </Space>
+                  </div>
+                );
+              },
+            },
+          ]}
           dataSource={users?.data}
-          rowKey={(row) => row.id || row._id}
+          rowKey={(row) => row._id}
           pagination={{
             current: queryParams.page,
             pageSize: queryParams.limit,
             total: users?.total,
             onChange: (page, pageSize) => {
-              setQueryParams({ page, limit: pageSize });
+              setQueryParams((prev) => ({
+                ...prev,
+                page,
+                limit: pageSize,
+              }));
+            },
+            showTotal: (total: number, range: number[]) => {
+              return `Showing ${range[0]}-${range[1]} of ${total} items`;
             },
           }}
         />
 
         <Drawer
-          title="Create User"
+          title={currentEditUser ? "Edit User" : "Add User"}
           width={720}
           destroyOnClose={true}
           style={{ backgroundColor: colorBgLayout }}
           open={drawerOpen}
           onClose={() => {
             form.resetFields();
+            setCurrentEditUser(null);
             setDrawerOpen(false);
           }}
           extra={
             <Space>
               <Button
                 onClick={() => {
-                  setDrawerOpen(false), form.resetFields();
+                  setDrawerOpen(false),
+                    setCurrentEditUser(null),
+                    form.resetFields();
                 }}
               >
                 Cancel
@@ -273,7 +266,7 @@ const Users = () => {
           }
         >
           <Form layout="vertical" form={form}>
-            <UserForm />
+            <UserForm isEditMode={!!currentEditUser} />
           </Form>
         </Drawer>
       </Space>

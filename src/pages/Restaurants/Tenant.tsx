@@ -1,22 +1,22 @@
 import { Breadcrumb, Button, Drawer, Form, Space, Table } from "antd";
 import { RightOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { creacteTenants, getTenants } from "../../http/api";
-import { TenantTypes } from "../../types";
+import { Link, Navigate } from "react-router-dom";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { creacteTenants, getTenants, updateTenants } from "../../http/api";
+import { FieldData, TenantTypes } from "../../types";
 import { PlusOutlined } from "@ant-design/icons";
 import TenantFilter from "./TenantFilter";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import TenantForm from "./Forms/TenantForm";
+import { useAuthState } from "../../store";
+import { LIMIT } from "../../constants";
+import { debounce } from "lodash";
 const columns = [
-  {
-    title: "Id",
-    dataIndex: "_id",
-    key: "_id",
-    render: (_text: string, record: TenantTypes) => {
-      return <div>{record._id}</div>;
-    },
-  },
   {
     title: "Name",
     dataIndex: "name",
@@ -98,10 +98,17 @@ const columns = [
   },
 ];
 const Tenant = () => {
+  const { user } = useAuthState();
   const [form] = Form.useForm();
+  const [fillterForm] = Form.useForm();
   const queryClient = useQueryClient();
+  const [currentEditUser, setCurrentEditUser] = useState<TenantTypes | null>();
+  const [queryParams, setQueryParams] = useState({
+    page: 1,
+    limit: LIMIT,
+  });
 
-  const { mutate: userMutate } = useMutation({
+  const { mutate: tenantMutate } = useMutation({
     mutationKey: ["tenants"],
     mutationFn: async (data: TenantTypes) =>
       creacteTenants(data).then((res) => res.data),
@@ -110,33 +117,75 @@ const Tenant = () => {
       return;
     },
   });
+
+  const { mutate: updateTenantMutate } = useMutation({
+    mutationKey: ["tenants"],
+    mutationFn: async (data: TenantTypes) =>
+      updateTenants(data, currentEditUser!._id).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
+      return;
+    },
+  });
+
   const onHandleSubmit = async () => {
-    try {
-      await form.validateFields();
-      const formData = form.getFieldsValue();
-      const currentTime = new Date().toISOString();
-      formData.createdAt = formData.createdAt || currentTime;
-      formData.updatedAt = currentTime;
-      await userMutate(formData);
-      form.resetFields();
-      setDrawerOpen(false);
-    } catch (error) {
-      console.error("Failed to submit form", error);
+    await form.validateFields();
+    const isEditMode = !!currentEditUser;
+    if (isEditMode) {
+      await updateTenantMutate(form.getFieldsValue());
+    } else {
+      await tenantMutate(form.getFieldsValue());
     }
+    form.resetFields();
+    setCurrentEditUser(null);
+    setDrawerOpen(false);
   };
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (currentEditUser) {
+      setDrawerOpen(true);
+      form.setFieldsValue(currentEditUser);
+    }
+  }, [currentEditUser, form]);
   const {
     data: tenants,
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: ["tenants"],
+    queryKey: ["tenants", queryParams],
     queryFn: () => {
-      return getTenants().then((res) => res.data);
+      const filteredParams = Object.fromEntries(
+        Object.entries(queryParams).filter((item) => !!item[1])
+      );
+      const queryString = new URLSearchParams(
+        filteredParams as unknown as Record<string, string>
+      ).toString();
+      return getTenants(queryString).then((res) => res.data);
     },
+    placeholderData: keepPreviousData,
   });
-  console.log(tenants);
+  const debouncedQUpadate = React.useMemo(() => {
+    return debounce((value: string | undefined) => {
+      setQueryParams((prev) => ({ ...prev, q: value, page: 1 }));
+    }, 500);
+  }, []);
+  const onFilterChange = (changeFields: FieldData[]) => {
+    console.log("sdff", changeFields);
+    const changeFillterFields = changeFields
+      .map((item) => ({
+        [item.name[0]]: item.value,
+      }))
+      .reduce((prev, curr) => ({ ...prev, ...curr }), {});
+    if ("q" in changeFillterFields) {
+      debouncedQUpadate(changeFillterFields.q);
+    } else {
+      setQueryParams((prev) => ({ ...prev, ...changeFillterFields, page: 1 }));
+    }
+  };
+  if (user?.role !== "admin") {
+    return <Navigate to="/" replace={true} />;
+  }
   return (
     <>
       <Space size="large" style={{ width: "100%" }} direction="vertical">
@@ -149,22 +198,54 @@ const Tenant = () => {
         />
         {isLoading && <div>Loading...</div>}
         {isError && <div>{error.message}</div>}
-        <TenantFilter
-          onFilterChange={(filterName: string, filterValue: string) => {
-            console.log(filterName, filterValue);
-          }}
-        >
-          <Button
-            onClick={() => setDrawerOpen(true)}
-            type="primary"
-            icon={<PlusOutlined />}
-          >
-            Add Restaurant
-          </Button>
-        </TenantFilter>
+        <Form form={fillterForm} onFieldsChange={onFilterChange}>
+          <TenantFilter>
+            <Button
+              onClick={() => setDrawerOpen(true)}
+              type="primary"
+              icon={<PlusOutlined />}
+            >
+              Add Restaurant
+            </Button>
+          </TenantFilter>
+        </Form>
         <Table
-          columns={columns}
-          dataSource={tenants}
+          columns={[
+            ...columns,
+            {
+              title: "Action",
+              render: (_: string, record: TenantTypes) => {
+                return (
+                  <div>
+                    <Space>
+                      <Button
+                        type="link"
+                        onClick={() => setCurrentEditUser(record)}
+                      >
+                        Edit
+                      </Button>
+                    </Space>
+                  </div>
+                );
+              },
+            },
+          ]}
+          pagination={{
+            current: queryParams.page,
+            pageSize: queryParams.limit,
+            total: tenants?.total,
+            onChange: (page, pageSize) => {
+              setQueryParams((prev) => ({
+                ...prev,
+                page,
+                limit: pageSize,
+              }));
+            },
+            showTotal: (total: number, range: number[]) => {
+              return `Showing ${range[0]}-${range[1]} of ${total} items`;
+            },
+          }}
+          dataSource={tenants?.data}
           rowKey={(row) => row._id}
         />
 
@@ -175,6 +256,7 @@ const Tenant = () => {
           open={drawerOpen}
           onClose={() => {
             form.resetFields();
+            setCurrentEditUser(null);
             setDrawerOpen(false);
           }}
           extra={
@@ -182,6 +264,7 @@ const Tenant = () => {
               <Button
                 onClick={() => {
                   form.resetFields();
+                  setCurrentEditUser(null);
                   setDrawerOpen(false);
                 }}
               >

@@ -1,4 +1,4 @@
-import { Outlet, Navigate, NavLink } from "react-router-dom";
+import { Outlet, Navigate, NavLink, useLocation } from "react-router-dom";
 import { useAuthState } from "../store";
 import Icon, { BellFilled } from "@ant-design/icons";
 import {
@@ -30,11 +30,6 @@ const getMenuItems = (role: string) => {
       label: <NavLink to="/">Home</NavLink>,
     },
     {
-      key: "/restaurants",
-      icon: <Icon component={FoodIcon} />,
-      label: <NavLink to="/restaurants">Restaurants</NavLink>,
-    },
-    {
       key: "/products",
       icon: <Icon component={BasketIcon} />,
       label: <NavLink to="/products">Products</NavLink>,
@@ -51,6 +46,11 @@ const getMenuItems = (role: string) => {
       key: "/users",
       icon: <Icon component={UserIcon} />,
       label: <NavLink to="/users">Users</NavLink>,
+    });
+    menus.splice(2, 0, {
+      key: "/restaurants",
+      icon: <Icon component={FoodIcon} />,
+      label: <NavLink to="/restaurants">Restaurants</NavLink>,
     });
     return menus;
   }
@@ -86,6 +86,7 @@ const getMenuItems = (role: string) => {
 // ];
 
 const Dashborad = () => {
+  const location = useLocation();
   const { user, logout: logoutFormStore } = useAuthState();
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
@@ -101,13 +102,19 @@ const Dashborad = () => {
   } = theme.useToken();
 
   if (user === null) {
-    return <Navigate to="/auth/login" replace={true} />;
+    return (
+      <Navigate
+        to={`/auth/login?returnTo=${location.pathname}`}
+        replace={true}
+      />
+    );
   }
   const items = getMenuItems(user?.role);
   return (
     <div>
       <Layout style={{ minHeight: "100vh", background: colorBgContainer }}>
         <Sider
+          style={{ position: "sticky", top: 0, zIndex: 1, height: "100vh" }}
           collapsible
           theme="light"
           collapsed={collapsed}
@@ -119,7 +126,7 @@ const Dashborad = () => {
 
           <Menu
             theme="light"
-            defaultSelectedKeys={["/"]}
+            defaultSelectedKeys={[location.pathname]}
             mode="inline"
             items={items}
           />
@@ -127,6 +134,9 @@ const Dashborad = () => {
         <Layout>
           <Header
             style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1,
               paddingLeft: "16px",
               paddingRight: "16px",
               background: colorBgContainer,

@@ -21,12 +21,12 @@ export interface IError {
 }
 
 export type User = {
-  [x: string]: string;
-  id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: string;
+  tenant?: TenantTypes | null;
   createdAt: string;
   updatedAt: string;
 };
