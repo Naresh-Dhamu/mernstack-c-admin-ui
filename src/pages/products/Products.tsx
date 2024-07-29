@@ -90,7 +90,7 @@ const Products = () => {
     limit: LIMIT,
     tenantId: user!.role === "manager" ? user?.tenant?._id : undefined,
   });
-  const { mutate: productMutate } = useMutation({
+  const { mutate: productMutate, isPending: isProductPending } = useMutation({
     mutationKey: ["products"],
     mutationFn: async (data: FormData) =>
       createProduct(data).then((res) => res.data),
@@ -275,7 +275,11 @@ const Products = () => {
               >
                 Cancel
               </Button>
-              <Button type="primary" onClick={onHandleSubmit}>
+              <Button
+                type="primary"
+                onClick={onHandleSubmit}
+                loading={isProductPending}
+              >
                 Submit
               </Button>
             </Space>
