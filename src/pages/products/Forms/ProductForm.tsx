@@ -30,7 +30,6 @@ const ProductForm = () => {
       return getTenants().then((res) => res.data.data);
     },
   });
-
   return (
     <Row>
       <Col span={24}>

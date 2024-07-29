@@ -15,40 +15,25 @@ const ProductImage = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [imageUrl, setImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const uploaderConfig: UploadProps = {
     name: "file",
     multiple: false,
     showUploadList: false,
-    beforeUpload: async (file) => {
-      const isJpgOrPng =
+    beforeUpload: (file) => {
+      const isJpnOrPng =
         file.type === "image/jpeg" || file.type === "image/png";
-      if (!isJpgOrPng) {
+      if (!isJpnOrPng) {
         messageApi.error("You can only upload JPG/PNG file!");
-        return false;
+      }
+      const isLt500KB = file.size < 500 * 1024; // 500KB in bytes
+      if (!isLt500KB) {
+        messageApi.error("Image must be smaller than 500KB!");
       }
       setLoading(true);
-      setProgress(0);
-      try {
-        const options = {
-          maxSizeMB: 0.5, // Maximum size in MB
-          maxWidthOrHeight: 1920, // Maximum width or height
-          initialQuality: 0.7,
-          useWebWorker: true, // Use web worker for faster compression
-          onProgress: (p: SetStateAction<number>) => setProgress(p),
-        };
 
-        const compressedFile = await imageCompression(file, options);
-        const compressedFileUrl = URL.createObjectURL(compressedFile);
-        setImageUrl(compressedFileUrl);
-
-        return true; // Indicate success
-      } catch (error) {
-        messageApi.error("Image compression failed!");
-        return false;
-      } finally {
-        setLoading(false);
-      }
+      setImageUrl(URL.createObjectURL(file));
+      setLoading(false);
+      return false;
     },
   };
   return (
@@ -69,7 +54,6 @@ const ProductImage = () => {
             <Spin
               indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
             />
-            <Progress percent={progress} status="active" />
           </div>
         ) : imageUrl ? (
           <img
