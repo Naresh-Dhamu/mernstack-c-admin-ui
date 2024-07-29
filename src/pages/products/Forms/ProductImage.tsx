@@ -1,7 +1,6 @@
 import {
   Form,
   message,
-  Progress,
   Space,
   Spin,
   Typography,
@@ -9,11 +8,10 @@ import {
   UploadProps,
 } from "antd";
 import { PlusOutlined, LoadingOutlined } from "@ant-design/icons";
-import { SetStateAction, useState } from "react";
-import imageCompression from "browser-image-compression";
-const ProductImage = () => {
+import { useState } from "react";
+const ProductImage = ({ initialImage }: { initialImage: string }) => {
   const [messageApi, contextHolder] = message.useMessage();
-  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>(initialImage);
   const [loading, setLoading] = useState(false);
   const uploaderConfig: UploadProps = {
     name: "file",

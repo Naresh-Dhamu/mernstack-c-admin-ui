@@ -80,11 +80,18 @@ export interface UserQueryParams {
   q?: string;
 }
 
+export type ProductAttributes = {
+  name: string;
+  value: string | boolean;
+};
+
 export type Product = {
   _id: string;
   name: string;
   description: string;
   category: Categories;
+  priceConfiguration: PriceConfiguration;
+  attributes: ProductAttributes[];
   image: string;
   isPublish: boolean;
   createdAt: string;

@@ -19,14 +19,14 @@ import {
   LoadingOutlined,
 } from "@ant-design/icons";
 import ProductsFilter from "./ProductsFilter";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { createProduct, getProducts } from "../../http/api";
+import { createProduct, getProducts, updateProduct } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
@@ -90,6 +90,41 @@ const Products = () => {
   const [filterForm] = Form.useForm();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [currentEditProduct, setCurrentEditProduct] = useState<Product | null>(
+    null
+  );
+  useEffect(() => {
+    if (currentEditProduct) {
+      setDrawerOpen(true);
+
+      const priceConfiguration = Object.entries(
+        currentEditProduct.priceConfiguration
+      ).reduce((acc, [key, value]) => {
+        const stringifiedKey = JSON.stringify({
+          configurationKey: key,
+          priceType: value.priceType,
+        });
+        return {
+          ...acc,
+          [stringifiedKey]: value.availableOptions,
+        };
+      }, {});
+      const attributes = currentEditProduct.attributes.reduce((acc, item) => {
+        return {
+          ...acc,
+          [item.name]: item.value,
+        };
+      }, {});
+      console.log({ currentEditProduct, priceConfiguration, attributes });
+      form.setFieldsValue({
+        ...currentEditProduct,
+        priceConfiguration,
+        attributes,
+        categoryId: currentEditProduct.category._id,
+      });
+    }
+    console.log(currentEditProduct?.category._id);
+  }, [currentEditProduct, form]);
   const [queryParams, setQueryParams] = useState({
     page: 1,
     limit: LIMIT,
@@ -97,12 +132,23 @@ const Products = () => {
   });
   const { mutate: productMutate, isPending: isProductPending } = useMutation({
     mutationKey: ["products"],
-    mutationFn: async (data: FormData) =>
-      createProduct(data).then((res) => res.data),
+    mutationFn: async (data: FormData) => {
+      if (currentEditProduct) {
+        return updateProduct(data, currentEditProduct._id).then(
+          (res) => res.data
+        );
+      } else {
+        return createProduct(data).then((res) => res.data);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       form.resetFields();
       setDrawerOpen(false);
+
+      if (currentEditProduct) {
+        setCurrentEditProduct(null);
+      }
 
       return;
     },
@@ -166,7 +212,7 @@ const Products = () => {
       },
       {}
     );
-    const categoryId = JSON.parse(allFields.categoryId)._id;
+    const categoryId = form.getFieldValue("categoryId");
     const attributes = Object.entries(allFields.attributes).map(
       ([key, value]) => {
         return {
@@ -189,8 +235,8 @@ const Products = () => {
     };
 
     const formData = makeFormData(postData);
+    console.log(postData);
     await productMutate(formData);
-    console.log(formData);
   };
 
   return (
@@ -229,13 +275,13 @@ const Products = () => {
             ...columns,
             {
               title: "Action",
-              render: () => {
+              render: (_, record: Product) => {
                 return (
                   <div>
                     <Space>
                       <Button
                         type="link"
-                        // onClick={() => setCurrentEditUser(record)}
+                        onClick={() => setCurrentEditProduct(record)}
                       >
                         Edit
                       </Button>
@@ -264,23 +310,22 @@ const Products = () => {
           }}
         />{" "}
         <Drawer
-          title={"Add Product"}
+          title={currentEditProduct ? "Update Product" : "Add Product"}
           width={720}
           destroyOnClose={true}
           style={{ backgroundColor: colorBgLayout }}
           open={drawerOpen}
           onClose={() => {
             form.resetFields();
-            // setCurrentEditUser(null);
+            setCurrentEditProduct(null);
             setDrawerOpen(false);
           }}
           extra={
             <Space>
               <Button
                 onClick={() => {
-                  setDrawerOpen(false),
-                    // setCurrentEditUser(null),
-                    form.resetFields();
+                  setDrawerOpen(false), setCurrentEditProduct(null);
+                  form.resetFields();
                 }}
               >
                 Cancel
@@ -296,9 +341,7 @@ const Products = () => {
           }
         >
           <Form layout="vertical" form={form}>
-            <ProductForm
-            // isEditMode={!!currentEditUser}
-            />
+            <ProductForm form={form} />
           </Form>
         </Drawer>
       </Space>
