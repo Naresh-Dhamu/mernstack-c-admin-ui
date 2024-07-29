@@ -1,6 +1,7 @@
 import {
   Breadcrumb,
   Button,
+  Drawer,
   Flex,
   Form,
   Image,
@@ -8,6 +9,7 @@ import {
   Spin,
   Table,
   Tag,
+  theme,
   Typography,
 } from "antd";
 import { Link } from "react-router-dom";
@@ -25,6 +27,7 @@ import { format } from "date-fns";
 import { debounce } from "lodash";
 import { LIMIT } from "../../constants";
 import { useAuthState } from "../../store";
+import ProductForm from "./Forms/ProductForm";
 
 const columns = [
   {
@@ -71,13 +74,18 @@ const columns = [
   },
 ];
 const Products = () => {
+  const [form] = Form.useForm();
   const { user } = useAuthState();
   const [filterForm] = Form.useForm();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [queryParams, setQueryParams] = useState({
     page: 1,
     limit: LIMIT,
     tenantId: user!.role === "manager" ? user?.tenant?._id : undefined,
   });
+  const {
+    token: { colorBgLayout },
+  } = theme.useToken();
   const {
     data: product,
     isFetching,
@@ -138,7 +146,11 @@ const Products = () => {
         </Flex>
         <Form form={filterForm} onFieldsChange={onFiltreChange}>
           <ProductsFilter>
-            <Button type="primary" icon={<PlusOutlined />}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setDrawerOpen(true)}
+            >
               Add Product
             </Button>
           </ProductsFilter>
@@ -181,7 +193,44 @@ const Products = () => {
               return `Showing ${range[0]}-${range[1]} of ${total} items`;
             },
           }}
-        />
+        />{" "}
+        <Drawer
+          title={"Add Product"}
+          width={720}
+          destroyOnClose={true}
+          style={{ backgroundColor: colorBgLayout }}
+          open={drawerOpen}
+          onClose={() => {
+            form.resetFields();
+            // setCurrentEditUser(null);
+            setDrawerOpen(false);
+          }}
+          extra={
+            <Space>
+              <Button
+                onClick={() => {
+                  setDrawerOpen(false),
+                    // setCurrentEditUser(null),
+                    form.resetFields();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                // onClick={onHandleSubmit}
+              >
+                Submit
+              </Button>
+            </Space>
+          }
+        >
+          <Form layout="vertical" form={form}>
+            <ProductForm
+            // isEditMode={!!currentEditUser}
+            />
+          </Form>
+        </Drawer>
       </Space>
     </>
   );
