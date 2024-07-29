@@ -144,6 +144,7 @@ const Products = () => {
   };
 
   const onHandleSubmit = async () => {
+    form.validateFields();
     const allFields = form.getFieldsValue();
     const priceConfiguration = allFields.priceConfiguration;
 
@@ -171,6 +172,10 @@ const Products = () => {
     );
     const postData = {
       ...allFields,
+      tenantId:
+        user!.role === "manager"
+          ? user?.tenant?._id
+          : form.getFieldValue("tenantId"),
       isPublish: allFields.isPublish ? true : false,
       image: allFields.image,
       categoryId,

@@ -24,10 +24,12 @@ const ProductImage = () => {
         file.type === "image/jpeg" || file.type === "image/png";
       if (!isJpnOrPng) {
         messageApi.error("You can only upload JPG/PNG file!");
+        return false;
       }
       const isLt500KB = file.size < 500 * 1024; // 500KB in bytes
       if (!isLt500KB) {
         messageApi.error("Image must be smaller than 500KB!");
+        return false;
       }
       setLoading(true);
 
