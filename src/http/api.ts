@@ -24,3 +24,9 @@ export const updateTenants = (tenant: TenantTypes, id: string) =>
 export const getCategories = () => api.get(`${CATALOG_SERVICE}/categories`);
 export const getProducts = (queryString?: string) =>
   api.get(`${CATALOG_SERVICE}/products?${queryString}`);
+export const createProduct = (product: FormData) =>
+  api.post(`${CATALOG_SERVICE}/products`, product, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });

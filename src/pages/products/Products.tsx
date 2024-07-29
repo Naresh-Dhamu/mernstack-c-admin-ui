@@ -20,14 +20,20 @@ import {
 } from "@ant-design/icons";
 import ProductsFilter from "./ProductsFilter";
 import React, { useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { getProducts } from "../../http/api";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createProduct, getProducts } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
 import { LIMIT } from "../../constants";
 import { useAuthState } from "../../store";
 import ProductForm from "./Forms/ProductForm";
+import { makeFormData } from "./helpers";
 
 const columns = [
   {
@@ -77,11 +83,24 @@ const Products = () => {
   const [form] = Form.useForm();
   const { user } = useAuthState();
   const [filterForm] = Form.useForm();
+  const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [queryParams, setQueryParams] = useState({
     page: 1,
     limit: LIMIT,
     tenantId: user!.role === "manager" ? user?.tenant?._id : undefined,
+  });
+  const { mutate: productMutate } = useMutation({
+    mutationKey: ["products"],
+    mutationFn: async (data: FormData) =>
+      createProduct(data).then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      form.resetFields();
+      setDrawerOpen(false);
+
+      return;
+    },
   });
   const {
     token: { colorBgLayout },
@@ -105,7 +124,6 @@ const Products = () => {
     },
     placeholderData: keepPreviousData,
   });
-  console.log(product?.data);
   const debouncedQUpadate = React.useMemo(() => {
     return debounce((value: string | undefined) => {
       setQueryParams((prev) => ({ ...prev, q: value, page: 1 }));
@@ -124,6 +142,47 @@ const Products = () => {
       setQueryParams((prev) => ({ ...prev, ...changeFillterFields, page: 1 }));
     }
   };
+
+  const onHandleSubmit = async () => {
+    const allFields = form.getFieldsValue();
+    const priceConfiguration = allFields.priceConfiguration;
+
+    const pricing = Object.entries(priceConfiguration).reduce(
+      (acc, [key, value]) => {
+        const parsedKey = JSON.parse(key);
+        return {
+          ...acc,
+          [parsedKey.configurationKey]: {
+            priceType: parsedKey.priceType,
+            availableOptions: value,
+          },
+        };
+      },
+      {}
+    );
+    const categoryId = JSON.parse(allFields.categoryId)._id;
+    const attributes = Object.entries(allFields.attributes).map(
+      ([key, value]) => {
+        return {
+          name: key,
+          value: value,
+        };
+      }
+    );
+    const postData = {
+      ...allFields,
+      isPublish: allFields.isPublish ? true : false,
+      image: allFields.image,
+      categoryId,
+      priceConfiguration: pricing,
+      attributes,
+    };
+
+    const formData = makeFormData(postData);
+    await productMutate(formData);
+    console.log(formData);
+  };
+
   return (
     <>
       <Space style={{ width: "100%" }} direction="vertical">
@@ -216,10 +275,7 @@ const Products = () => {
               >
                 Cancel
               </Button>
-              <Button
-                type="primary"
-                // onClick={onHandleSubmit}
-              >
+              <Button type="primary" onClick={onHandleSubmit}>
                 Submit
               </Button>
             </Space>
