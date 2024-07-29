@@ -21,7 +21,10 @@ const ProductImage = () => {
     showUploadList: false,
     beforeUpload: (file) => {
       const isJpnOrPng =
-        file.type === "image/jpeg" || file.type === "image/png";
+        file.type === "image/jpeg" ||
+        file.type === "image/png" ||
+        file.type === "image/jpg" ||
+        file.type === "image/webp";
       if (!isJpnOrPng) {
         messageApi.error("You can only upload JPG/PNG file!");
         return false;

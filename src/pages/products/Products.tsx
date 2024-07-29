@@ -44,7 +44,7 @@ const columns = [
       <div>
         <Space>
           <Image width={50} height={50} src={record.image} preview={false} />
-          <Typography.Text>{record.name}</Typography.Text>
+          <Typography.Text>{record.name.slice(0, 20) + "..."}</Typography.Text>
         </Space>
       </div>
     ),
@@ -53,6 +53,11 @@ const columns = [
     title: "Description",
     dataIndex: "description",
     key: "description",
+    render: (_text: string, record: Product) => (
+      <Typography.Text>
+        {record.description.slice(0, 30) + "..."}
+      </Typography.Text>
+    ),
   },
   {
     title: "Status",
