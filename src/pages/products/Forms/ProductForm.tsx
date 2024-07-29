@@ -3,27 +3,21 @@ import {
   Col,
   Form,
   Input,
-  message,
   Row,
   Select,
   Space,
   Switch,
   Typography,
-  Upload,
-  UploadProps,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
 import { Categories, TenantTypes } from "../../../types";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories, getTenants } from "../../../http/api";
 import Pricing from "./Pricing";
 import Attributes from "./Attributes";
-import { useState } from "react";
+import ProductImage from "./ProductImage";
 
 const ProductForm = () => {
   const selectedCategory = Form.useWatch("categoryId", Form.useFormInstance());
-  const [messageApi, contextHolder] = message.useMessage();
-  const [imageUrl, setImageUrl] = useState<string>("");
   const { data: categories } = useQuery({
     queryKey: ["catagories"],
     queryFn: () => {
@@ -36,24 +30,7 @@ const ProductForm = () => {
       return getTenants().then((res) => res.data.data);
     },
   });
-  const uploaderConfig: UploadProps = {
-    name: "file",
-    multiple: false,
-    showUploadList: false,
-    beforeUpload: (file) => {
-      const isJpnOrPng =
-        file.type === "image/jpeg" || file.type === "image/png";
-      if (!isJpnOrPng) {
-        messageApi.error("You can only upload JPG/PNG file!");
-      }
-      const isLt500KB = file.size < 500 * 1024; // 500KB in bytes
-      if (!isLt500KB) {
-        messageApi.error("Image must be smaller than 500KB!");
-      }
-      setImageUrl(URL.createObjectURL(file));
-      return false;
-    },
-  };
+
   return (
     <Row>
       <Col span={24}>
@@ -126,32 +103,7 @@ const ProductForm = () => {
           <Card title="Product Images" bordered={false}>
             <Row gutter={20}>
               <Col span={24}>
-                <Form.Item
-                  label="Product Image"
-                  name="image"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please upload your product image!",
-                    },
-                  ]}
-                >
-                  {contextHolder}
-                  <Upload
-                    listType="picture-card"
-                    accept="image/*"
-                    {...uploaderConfig}
-                  >
-                    {imageUrl ? (
-                      <img src={imageUrl} alt="product image" />
-                    ) : (
-                      <Space direction="vertical">
-                        <PlusOutlined />
-                        <Typography.Text>Upload</Typography.Text>
-                      </Space>
-                    )}
-                  </Upload>
-                </Form.Item>
+                <ProductImage />
               </Col>
             </Row>
           </Card>
