@@ -1,9 +1,9 @@
-import { Breadcrumb, Flex, Space, Table, Tag, Typography } from "antd";
+import { Breadcrumb, Flex, message, Space, Table, Tag, Typography } from "antd";
 import { RightOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 
-import { Order } from "../../types";
-import { useQuery } from "@tanstack/react-query";
+import { Order, PaymentMode, PaymentStatus } from "../../types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOrders } from "../../http/api";
 import { format } from "date-fns";
 import { colorMapping } from "../../constants";
@@ -100,9 +100,29 @@ const columns = [
 const TENANT_ID = "66a12a92252e374c63be8165";
 const Orders = () => {
   const { user } = useAuthState();
+
+  const queryClient = useQueryClient();
+  const [messageApi, contextHolder] = message.useMessage();
   React.useEffect(() => {
     if (user?.tenant) {
       socket.on("order-update", (data) => {
+        if (
+          (data.event_type === "ORDER_CREATE" &&
+            data.data.paymentMode === PaymentMode.CASH) ||
+          (data.event_type === "PAYMENT_STATUS_UPDATE" &&
+            data.data.paymentStatus === PaymentStatus.PAID &&
+            data.data.paymentMode === PaymentMode.CARD)
+        ) {
+          queryClient.setQueryData(["order"], (old: Order[]) => [
+            data.data,
+            ...old,
+          ]);
+          messageApi.open({
+            type: "success",
+            content: `New Order Received`,
+          });
+        }
+
         console.log("Data received", data);
       });
       socket.on("join", (data) => {
@@ -127,24 +147,27 @@ const Orders = () => {
     },
   });
   return (
-    <Space style={{ width: "100%" }} direction="vertical">
-      <Flex justify="space-between" align="center">
-        <Breadcrumb
-          separator={<RightOutlined />}
-          items={[
-            { title: <Link to="/">Dashboard</Link> },
-            { title: "Orders" },
-          ]}
-        />
-        {/* {isFetching && (
+    <>
+      {contextHolder}
+      <Space style={{ width: "100%" }} direction="vertical">
+        <Flex justify="space-between" align="center">
+          <Breadcrumb
+            separator={<RightOutlined />}
+            items={[
+              { title: <Link to="/">Dashboard</Link> },
+              { title: "Orders" },
+            ]}
+          />
+          {/* {isFetching && (
           <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
         )}
         {isError && (
           <Typography.Text type="danger">{error.message}</Typography.Text>
         )} */}
-      </Flex>
-      <Table columns={columns} rowKey={"_id"} dataSource={orders}></Table>
-    </Space>
+        </Flex>
+        <Table columns={columns} rowKey={"_id"} dataSource={orders}></Table>
+      </Space>
+    </>
   );
 };
 
