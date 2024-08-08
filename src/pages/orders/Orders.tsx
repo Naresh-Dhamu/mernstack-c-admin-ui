@@ -8,6 +8,9 @@ import { getOrders } from "../../http/api";
 import { format } from "date-fns";
 import { colorMapping } from "../../constants";
 import { capitalizeFirst } from "../../utils";
+import React from "react";
+import socket from "../../lib/socket";
+import { useAuthState } from "../../store";
 const columns = [
   {
     title: "Order Id",
@@ -96,6 +99,24 @@ const columns = [
 
 const TENANT_ID = "66a12a92252e374c63be8165";
 const Orders = () => {
+  const { user } = useAuthState();
+  React.useEffect(() => {
+    if (user?.tenant) {
+      socket.on("order-update", (data) => {
+        console.log("Data received", data);
+      });
+      socket.on("join", (data) => {
+        console.log("User joined in", data.roomId);
+      });
+      socket.emit("join", {
+        tenantId: user.tenant._id,
+      });
+    }
+    return () => {
+      socket.off("join");
+      socket.off("order-update");
+    };
+  }, []);
   const { data: orders } = useQuery({
     queryKey: ["orders"],
     queryFn: () => {
