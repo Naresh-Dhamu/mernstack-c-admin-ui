@@ -9,6 +9,7 @@ import Tenant from "./pages/Restaurants/Tenant";
 import Products from "./pages/products/Products";
 import Promos from "./pages/promos/promos";
 import Orders from "./pages/orders/Orders";
+import SingleOrder from "./pages/orders/SingleOrder";
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
           {
             path: "/orders",
             element: <Orders />,
+          },
+          {
+            path: "/orders/:orderId",
+            element: <SingleOrder />,
           },
         ],
       },
