@@ -167,7 +167,7 @@ export interface Order {
   image: string;
   cart: CartItem[];
   customerId: Customer;
-  total: number;
+  total: string;
   discount: number;
   taxes: number;
   deliveryCharge: number;

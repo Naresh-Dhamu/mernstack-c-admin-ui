@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
   Avatar,
   Breadcrumb,
@@ -18,6 +17,7 @@ import { capitalizeFirst } from "../../utils";
 import { useQuery } from "@tanstack/react-query";
 import { getSingle } from "../../http/api";
 import { Order } from "../../types";
+import { format } from "date-fns";
 const SingleOrder = () => {
   const params = useParams();
   const orderId = params.orderId;
@@ -26,7 +26,7 @@ const SingleOrder = () => {
     queryFn: () => {
       const queryString = new URLSearchParams({
         fields:
-          "cart,address,paymentMode,total,tenantId,paymentStatus,comment,orderStatus",
+          "cart,address,paymentMode,total,tenantId,paymentStatus,comment,orderStatus,createdAt",
       }).toString();
       return getSingle(orderId as string, queryString).then((res) => res.data);
     },
@@ -66,9 +66,9 @@ const SingleOrder = () => {
                   <List.Item.Meta
                     avatar={<Avatar src={item.image} shape="circle" />}
                     title={item.name}
-                    description={item.chosenConfiguration.selectedToppings
-                      // @ts-ignore
-                      .map((topping) => capitalizeFirst(topping.name))}
+                    description={item.chosenConfiguration.selectedToppings.map(
+                      (topping) => capitalizeFirst(topping.name)
+                    )}
                   />
                   <Space size={"large"}>
                     <Typography.Text>
@@ -86,7 +86,52 @@ const SingleOrder = () => {
           </Card>
         </Col>
         <Col span={10}>
-          <Card title="Customer Details">some content goes here....</Card>
+          <Card title="Customer Details">
+            <Space direction="vertical">
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">Name</Typography.Text>
+                <Typography.Text>
+                  {order.customerId.firstName + " " + order.customerId.lastName}
+                </Typography.Text>
+              </Flex>
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">Address</Typography.Text>
+                <Typography.Text>{order.address}</Typography.Text>
+              </Flex>
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">
+                  Payment Method
+                </Typography.Text>
+                <Typography.Text>
+                  {order.paymentMode.toUpperCase()}
+                </Typography.Text>
+              </Flex>
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">
+                  Payment Status
+                </Typography.Text>
+                <Typography.Text>
+                  {capitalizeFirst(order.paymentStatus)}
+                </Typography.Text>
+              </Flex>
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">Order Amount</Typography.Text>
+                <Typography.Text>₹{order.total}</Typography.Text>
+              </Flex>
+              <Flex style={{ flexDirection: "column" }}>
+                <Typography.Text type="secondary">Order Time</Typography.Text>
+                <Typography.Text>
+                  {format(new Date(order.createdAt), "dd MMMM yyyy hh:mm a")}
+                </Typography.Text>
+              </Flex>
+              {order.comment && (
+                <Flex style={{ flexDirection: "column" }}>
+                  <Typography.Text type="secondary">Comment</Typography.Text>
+                  <Typography.Text>{order.comment}</Typography.Text>
+                </Flex>
+              )}
+            </Space>
+          </Card>
         </Col>
       </Row>
     </Space>
