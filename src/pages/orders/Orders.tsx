@@ -116,7 +116,7 @@ const Orders = () => {
       socket.off("join");
       socket.off("order-update");
     };
-  }, []);
+  }, [user?.tenant]);
   const { data: orders } = useQuery({
     queryKey: ["orders"],
     queryFn: () => {
