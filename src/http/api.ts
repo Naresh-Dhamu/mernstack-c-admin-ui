@@ -1,4 +1,10 @@
-import { CreacteUserData, Credentials, TenantTypes } from "../types";
+import {
+  CreacteUserData,
+  Credentials,
+  PromosTypes,
+  // PromosTypes,
+  TenantTypes,
+} from "../types";
 import { api } from "./client";
 
 export const AUTH_SERVICE = "/api/auth";
@@ -21,7 +27,8 @@ export const updateTenants = (tenant: TenantTypes, id: string) =>
   api.patch(`${AUTH_SERVICE}/tenants/${id}`, tenant);
 
 //Catelog service
-export const getCategories = () => api.get(`${CATALOG_SERVICE}/categories`);
+export const getCategories = (queryString?: string) =>
+  api.get(`${CATALOG_SERVICE}/categories?${queryString}`);
 export const getProducts = (queryString?: string) =>
   api.get(`${CATALOG_SERVICE}/products?${queryString}`);
 export const createProduct = (product: FormData) =>
@@ -40,3 +47,18 @@ export const updateProduct = (product: FormData, id: string) => {
     },
   });
 };
+
+// Order-service
+// export const creactePromos = (promos: PromosTypes) =>
+//   api.post(`${ORDER_SERVICE}/promos`, promos);
+
+const ORDER_SERVICE = "/api/order";
+export const getCoupons = (queryString: string) =>
+  api.get(`${ORDER_SERVICE}/coupons?${queryString}`);
+export const createCoupons = (promos: PromosTypes) =>
+  api.post(`${ORDER_SERVICE}/coupons`, promos);
+export const updateCoupons = (promos: PromosTypes, _id: string) =>
+  api.put(`${ORDER_SERVICE}/coupons/${_id}`, promos);
+
+export const getOrders = (queryString: string) =>
+  api.get(`${ORDER_SERVICE}/orders?${queryString}`);

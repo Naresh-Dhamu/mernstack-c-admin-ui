@@ -115,7 +115,6 @@ const Products = () => {
           [item.name]: item.value,
         };
       }, {});
-      console.log({ currentEditProduct, priceConfiguration, attributes });
       form.setFieldsValue({
         ...currentEditProduct,
         priceConfiguration,
@@ -123,7 +122,6 @@ const Products = () => {
         categoryId: currentEditProduct.category._id,
       });
     }
-    console.log(currentEditProduct?.category._id);
   }, [currentEditProduct, form]);
   const [queryParams, setQueryParams] = useState({
     page: 1,
@@ -235,7 +233,6 @@ const Products = () => {
     };
 
     const formData = makeFormData(postData);
-    console.log(postData);
     await productMutate(formData);
   };
 

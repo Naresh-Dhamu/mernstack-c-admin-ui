@@ -58,7 +58,6 @@ const { Title, Text } = Typography;
 export default function HomePage() {
   const { user } = useAuthState();
   const name = user?.firstName + " " + user?.lastName;
-
   const getStatusColor = (status: string): string => {
     switch (status) {
       case "Pending":

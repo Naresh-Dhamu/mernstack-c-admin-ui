@@ -7,7 +7,7 @@ const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
   const { data: tenants } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => {
-      return getTenants().then((res) => res.data.data);
+      return getTenants("limit=100").then((res) => res.data.data);
     },
     enabled: selectedRole === "manager",
   });
@@ -101,7 +101,6 @@ const UserForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                 <Col span={12}>
                   <Form.Item label="Restaurant" name="tenantId">
                     <Select
-                      id="selectInBoxRole"
                       size="large"
                       style={{ width: "100%" }}
                       placeholder="Select restaurant"

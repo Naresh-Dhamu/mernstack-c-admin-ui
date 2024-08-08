@@ -68,6 +68,7 @@ const ProductForm = ({ form }: { form: FormInstance }) => {
                     size="large"
                     style={{ width: "100%" }}
                     allowClear={true}
+                    showSearch
                     placeholder="Select Category"
                   >
                     {categories?.data.data.map((category: Categories) => (

@@ -32,9 +32,13 @@ const columns = [
     key: "address",
   },
   {
-    title: "UserId",
+    title: "User Name",
     dataIndex: "userId",
     key: "userId",
+    render: (_text: string, record: TenantTypes) => {
+      const fullName = `${record.userId.firstName} ${record.userId.lastName}`;
+      return <div>{fullName}</div>;
+    },
   },
   {
     title: "Created At",

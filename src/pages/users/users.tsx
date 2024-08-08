@@ -121,7 +121,7 @@ const Users = () => {
       setDrawerOpen(true);
       form.setFieldsValue({
         ...currentEditUser,
-        tenantId: currentEditUser.tenant?._id,
+        tenantId: currentEditUser.tenant?.name,
       });
     }
   }, [currentEditUser, form]);
